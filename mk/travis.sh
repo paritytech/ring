@@ -27,12 +27,15 @@ arm-unknown-linux-gnueabihf)
   export QEMU_LD_PREFIX=/usr/arm-linux-gnueabihf
   ;;
 armv7-linux-androideabi)
-  # install the android sdk/ndk
-  mk/travis-install-android.sh
+  . mk/android-ndk.sh
+  download_and_make_toolchain android-ndk-r15c-linux-x86_64.zip arm 14
 
-  export PATH=$HOME/android/android-18-arm-linux-androideabi-4.8/bin:$PATH
-  export PATH=$HOME/android/android-sdk-linux/platform-tools:$PATH
-  export PATH=$HOME/android/android-sdk-linux/tools:$PATH
+  . mk/android-sdk.sh
+  download_and_create_avd 4333796 armeabi-v7a 18
+
+  export PATH=$PATH:/android/sdk/emulator
+  export PATH=$PATH:/android/sdk/tools
+  export PATH=$PATH:/android/sdk/platform-tools
   ;;
 *)
   ;;
