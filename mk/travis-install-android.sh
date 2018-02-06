@@ -31,13 +31,12 @@ ANDROID_INSTALL_PREFIX="${HOME}/android"
 ANDROID_SDK_INSTALL_DIR="${HOME}/android/android-sdk-linux"
 ANDROID_NDK_INSTALL_DIR="${ANDROID_INSTALL_PREFIX}/android-18-arm-linux-androideabi-4.8"
 
-if [[ ! -f $ANDROID_SDK_INSTALL_DIR/tools/emulator ]];then
-  mkdir -p "${ANDROID_INSTALL_PREFIX}"
-  pushd "${ANDROID_INSTALL_PREFIX}"
+mkdir -p "${ANDROID_INSTALL_PREFIX}"
+pushd "${ANDROID_INSTALL_PREFIX}"
 
-  curl ${ANDROID_SDK_URL} | tar -zxf -
+curl ${ANDROID_SDK_URL} | tar -zxf -
 
-  expect -c '
+expect -c '
 set timeout 600;
 spawn ./android-sdk-linux/tools/android update sdk -a --no-ui --filter tools,platform-tools,android-18,sys-img-armeabi-v7a-android-18;
 expect {
@@ -45,24 +44,22 @@ expect {
     eof
 }
 '
-  popd
-fi
+popd
 
-if [[ ! -d $ANDROID_NDK_INSTALL_DIR/sysroot/usr/include/arm-linux-androideabi ]];then
-  mkdir -p "${ANDROID_INSTALL_PREFIX}/downloads"
-  pushd "${ANDROID_INSTALL_PREFIX}/downloads"
 
-  curl -O ${ANDROID_NDK_URL}
-  unzip -q android-ndk-r${ANDROID_NDK_VERSION}-linux-x86_64.zip
+mkdir -p "${ANDROID_INSTALL_PREFIX}/downloads"
+pushd "${ANDROID_INSTALL_PREFIX}/downloads"
 
-  ./android-ndk-r${ANDROID_NDK_VERSION}/build/tools/make_standalone_toolchain.py \
+curl -O ${ANDROID_NDK_URL}
+unzip -q android-ndk-r${ANDROID_NDK_VERSION}-linux-x86_64.zip
+
+./android-ndk-r${ANDROID_NDK_VERSION}/build/tools/make_standalone_toolchain.py \
 		 --force \
 		 --arch arm \
 		 --api 18 \
 		 --unified-headers \
 		 --install-dir ${ANDROID_NDK_INSTALL_DIR}
 
-  popd
-fi
+popd
 
 echo end of mk/travis-install-android
