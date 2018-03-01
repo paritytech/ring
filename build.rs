@@ -38,6 +38,7 @@
 
 extern crate cc;
 extern crate rayon;
+extern crate tempfile;
 
 // In the `pregenerate_asm_main()` case we don't want to access (Cargo)
 // environment variables at all, so avoid `use std::env` here.
@@ -45,6 +46,7 @@ extern crate rayon;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::fs::{self, DirEntry};
+use std::io::Write;
 use std::time::SystemTime;
 use rayon::iter::{ParallelIterator, IndexedParallelIterator,
                   IntoParallelIterator, IntoParallelRefIterator};
@@ -590,14 +592,15 @@ fn cc(file: &Path, ext: &str, target: &Target, warnings_are_errors: bool,
         let _ = c.flag("-U_FORTIFY_SOURCE");
     }
     if target.os() == "android" {
-        // Define __ANDROID_API__ to the Android API level we want.
-        // Needed for Android NDK Unified Headers, see:
-        // https://android.googlesource.com/platform/ndk/+/master/docs/UnifiedHeaders.md#Supporting-Unified-Headers-in-Your-Build-System
-        if target.arch() == "aarch64" {
-            // Minimum API level where AArch64 is available is 21.
-            let _ = c.define("__ANDROID_API__", Some("21"));
-        } else {
-            let _ = c.define("__ANDROID_API__", Some("18"));
+        // We need __ANDROID_API__ to be defined to the Android API we want.
+        // To check this, we compile a dummy file that errors if it's not what we want.
+        let required_api_level = if target.arch() == "aarch64" { 21 } else { 18 };
+        let mut tempfile = tempfile::NamedTempFile::new().unwrap();
+        write!(tempfile, "#if __ANDROID_API__ >= {} \n#else\n#error Bad\n#endif\nint main() {{}}",
+               required_api_level).unwrap();
+        if let Err(_) = cc::Build::new().warnings(false).file(tempfile.path()).try_expand() {
+            panic!("You need to define __ANDROID_API__ to at least {} for ring to compile",
+                   required_api_level);
         }
     }
 
