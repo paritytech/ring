@@ -396,7 +396,7 @@ fn build_c_code(target: &Target, pregenerated: PathBuf, out_dir: &Path) {
 
     let is_git = std::fs::metadata(".git").is_ok();
 
-    let use_pregenerated = !is_git;
+    let use_pregenerated = false;
     let warnings_are_errors = is_git;
 
     let asm_dir = if use_pregenerated { &pregenerated } else { out_dir };
